@@ -1,0 +1,4 @@
+[2026-05-07T13:12:56.428Z] 9:12:56 AM [vite] (client) page reload client/index.html
+[2026-05-07T13:12:56.453Z] 9:12:56 AM [vite] changed tsconfig file detected: /home/ubuntu/gestao_aviacao/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+[2026-05-07T13:15:03.663Z] 9:15:03 AM [vite] changed tsconfig file detected: /home/ubuntu/gestao_aviacao/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+[2026-05-07T13:15:08.963Z] 9:15:08 AM [vite] (client) page reload client/index.html
