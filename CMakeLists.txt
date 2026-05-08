@@ -28,7 +28,11 @@ set(PROJECT_SOURCES
     src/loginpage.cpp
 )
 
-add_executable(AeroGestao ${PROJECT_SOURCES})
+set(PROJECT_RESOURCES
+    resources.qrc
+)
+
+add_executable(AeroGestao ${PROJECT_SOURCES} ${PROJECT_RESOURCES})
 
 target_link_libraries(AeroGestao
     Qt6::Core
