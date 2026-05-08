@@ -58,58 +58,63 @@ bool Database::createTables()
 {
     QSqlQuery query;
 
-    // Tabela de aeronaves
+    // ===== TABELA: AIRCRAFT =====
     if (!query.exec("CREATE TABLE IF NOT EXISTS aircraft ("
-                    "id INTEGER PRIMARY KEY,"
-                    "model TEXT NOT NULL,"
-                    "seat_rows INTEGER NOT NULL,"
-                    "seat_columns INTEGER NOT NULL)")) {
+                    "  id INTEGER PRIMARY KEY,"
+                    "  model TEXT NOT NULL,"
+                    "  seat_rows INTEGER NOT NULL,"
+                    "  seat_columns INTEGER NOT NULL"
+                    ")")) {
         qWarning() << "Erro ao criar tabela aircraft:" << query.lastError().text();
         return false;
     }
 
-    // Tabela de voos
+    // ===== TABELA: FLIGHTS =====
     if (!query.exec("CREATE TABLE IF NOT EXISTS flights ("
-                    "id INTEGER PRIMARY KEY,"
-                    "code TEXT UNIQUE NOT NULL,"
-                    "origin TEXT NOT NULL,"
-                    "destination TEXT NOT NULL,"
-                    "date TEXT NOT NULL,"
-                    "time TEXT NOT NULL,"
-                    "aircraft_id INTEGER NOT NULL,"
-                    "status TEXT DEFAULT 'Aberto',"
-                    "price REAL NOT NULL,"
-                    "FOREIGN KEY (aircraft_id) REFERENCES aircraft(id))")) {
+                    "  id INTEGER PRIMARY KEY,"
+                    "  code TEXT UNIQUE NOT NULL,"
+                    "  origin TEXT NOT NULL,"
+                    "  destination TEXT NOT NULL,"
+                    "  date TEXT NOT NULL,"
+                    "  time TEXT NOT NULL,"
+                    "  aircraft_id INTEGER NOT NULL,"
+                    "  status TEXT DEFAULT 'Aberto',"
+                    "  price REAL NOT NULL,"
+                    "  FOREIGN KEY (aircraft_id) REFERENCES aircraft(id)"
+                    ")")) {
         qWarning() << "Erro ao criar tabela flights:" << query.lastError().text();
         return false;
     }
 
-    // Tabela de assentos
+    // ===== TABELA: SEATS =====
     if (!query.exec("CREATE TABLE IF NOT EXISTS seats ("
-                    "id INTEGER PRIMARY KEY,"
-                    "aircraft_id INTEGER NOT NULL,"
-                    "code TEXT NOT NULL,"
-                    "row_label TEXT NOT NULL,"
-                    "seat_number INTEGER NOT NULL,"
-                    "FOREIGN KEY (aircraft_id) REFERENCES aircraft(id),"
-                    "UNIQUE(aircraft_id, code))")) {
+                    "  id INTEGER PRIMARY KEY,"
+                    "  aircraft_id INTEGER NOT NULL,"
+                    "  code TEXT NOT NULL,"
+                    "  row_label TEXT NOT NULL,"
+                    "  seat_number INTEGER NOT NULL,"
+                    "  FOREIGN KEY (aircraft_id) REFERENCES aircraft(id),"
+                    "  UNIQUE(aircraft_id, code)"
+                    ")")) {
         qWarning() << "Erro ao criar tabela seats:" << query.lastError().text();
         return false;
     }
 
-    // Tabela de reservas
+    // ===== TABELA: RESERVATIONS =====
     if (!query.exec("CREATE TABLE IF NOT EXISTS reservations ("
-                    "id INTEGER PRIMARY KEY,"
-                    "flight_id INTEGER NOT NULL,"
-                    "seat_code TEXT NOT NULL,"
-                    "passenger_name TEXT NOT NULL,"
-                    "passenger_document TEXT NOT NULL,"
-                    "FOREIGN KEY (flight_id) REFERENCES flights(id),"
-                    "UNIQUE(flight_id, seat_code))")) {
+                    "  id INTEGER PRIMARY KEY,"
+                    "  flight_id INTEGER NOT NULL,"
+                    "  seat_code TEXT NOT NULL,"
+                    "  passenger_name TEXT NOT NULL,"
+                    "  passenger_document TEXT NOT NULL,"
+                    "  FOREIGN KEY (flight_id) REFERENCES flights(id),"
+                    "  UNIQUE(flight_id, seat_code)"
+                    ")")) {
         qWarning() << "Erro ao criar tabela reservations:" << query.lastError().text();
         return false;
     }
 
+    qDebug() << "Tabelas criadas com sucesso";
     return true;
 }
 
@@ -117,12 +122,12 @@ bool Database::insertSampleData()
 {
     QSqlQuery query;
 
-    // Inserir aeronaves
+    // ===== INSERIR AERONAVES =====
     query.exec("INSERT INTO aircraft (model, seat_rows, seat_columns) VALUES ('A320 Neo', 6, 32)");
     query.exec("INSERT INTO aircraft (model, seat_rows, seat_columns) VALUES ('B737-800', 6, 35)");
     query.exec("INSERT INTO aircraft (model, seat_rows, seat_columns) VALUES ('E195-E2', 5, 40)");
 
-    // Gerar assentos para cada aeronave
+    // ===== GERAR ASSENTOS =====
     query.exec("SELECT id, seat_rows, seat_columns FROM aircraft");
     while (query.next()) {
         int aircraftId = query.value(0).toInt();
@@ -131,7 +136,7 @@ bool Database::insertSampleData()
         generateSeatsForAircraft(aircraftId, rows, cols);
     }
 
-    // Inserir voos de exemplo
+    // ===== INSERIR VOOS =====
     query.exec("INSERT INTO flights (code, origin, destination, date, time, aircraft_id, price, status) "
                "VALUES ('AV-1047', 'São Paulo', 'Rio de Janeiro', '2026-05-18', '08:35', 1, 428.00, 'Aberto')");
     query.exec("INSERT INTO flights (code, origin, destination, date, time, aircraft_id, price, status) "
@@ -139,7 +144,7 @@ bool Database::insertSampleData()
     query.exec("INSERT INTO flights (code, origin, destination, date, time, aircraft_id, price, status) "
                "VALUES ('AV-3382', 'Curitiba', 'Salvador', '2026-05-19', '17:45', 3, 735.00, 'Aberto')");
 
-    // Inserir algumas reservas de exemplo
+    // ===== INSERIR RESERVAS DE EXEMPLO =====
     query.exec("INSERT INTO reservations (flight_id, seat_code, passenger_name, passenger_document) "
                "VALUES (1, 'A2', 'João Silva', '12345678900')");
     query.exec("INSERT INTO reservations (flight_id, seat_code, passenger_name, passenger_document) "
@@ -166,6 +171,8 @@ void Database::generateSeatsForAircraft(int aircraftId, int rows, int columns)
         }
     }
 }
+
+// ===== OPERAÇÕES DE VOOS =====
 
 QVector<Flight> Database::getAllFlights()
 {
@@ -215,6 +222,8 @@ bool Database::updateFlightStatus(int flightId, const QString& status)
     return query.exec();
 }
 
+// ===== OPERAÇÕES DE ASSENTOS =====
+
 QVector<Seat> Database::getFlightSeats(int flightId)
 {
     QVector<Seat> seats;
@@ -251,6 +260,8 @@ QVector<QString> Database::getReservedSeats(int flightId)
 
     return reserved;
 }
+
+// ===== OPERAÇÕES DE RESERVAS =====
 
 bool Database::addReservation(int flightId, const QString& seatCode,
                               const QString& passengerName, const QString& passengerDocument)
@@ -297,6 +308,8 @@ bool Database::canReserveSeat(int flightId, const QString& seatCode)
     QVector<QString> reserved = getReservedSeats(flightId);
     return !reserved.contains(seatCode);
 }
+
+// ===== OPERAÇÕES DE AERONAVES =====
 
 QVector<Aircraft> Database::getAllAircraft()
 {
