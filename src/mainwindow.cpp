@@ -1,16 +1,24 @@
 #include "mainwindow.h"
+#include "clientpage.h"
+#include "adminpage.h"
+#include "loginpage.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QLabel>
 #include <QFont>
-#include <QPixmap>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QStandardPaths>
+#include <QDir>
+#include <QFile>
+#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    database = new Database();
-    if (!database->initialize()) {
+    if (!initializeDatabase()) {
         qWarning() << "Falha ao inicializar banco de dados";
     }
 
@@ -19,7 +27,57 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    delete database;
+    if (db.isOpen()) {
+        db.close();
+    }
+}
+
+bool MainWindow::initializeDatabase()
+{
+    db = QSqlDatabase::addDatabase("QSQLITE");
+    
+    QString dataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QDir().mkpath(dataPath);
+    
+    QString dbPath = dataPath + "/aviacao.db";
+    db.setDatabaseName(dbPath);
+
+    if (!db.open()) {
+        qWarning() << "Erro ao abrir banco:" << db.lastError().text();
+        return false;
+    }
+
+    qDebug() << "Banco aberto em:" << dbPath;
+
+    // Verificar se precisa executar o schema
+    QSqlQuery checkQuery("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='flights'");
+    bool needsSchema = true;
+    
+    if (checkQuery.next()) {
+        needsSchema = checkQuery.value(0).toInt() == 0;
+    }
+
+    if (needsSchema) {
+        QFile schemaFile(":/schema.sql");
+        if (schemaFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            QString schema = QString::fromUtf8(schemaFile.readAll());
+            schemaFile.close();
+
+            QStringList commands = schema.split(";", Qt::SkipEmptyParts);
+            for (const QString& command : commands) {
+                QString trimmedCommand = command.trimmed();
+                if (!trimmedCommand.isEmpty()) {
+                    QSqlQuery execQuery;
+                    if (!execQuery.exec(trimmedCommand)) {
+                        qWarning() << "Erro ao executar SQL:" << execQuery.lastError().text();
+                    }
+                }
+            }
+            qDebug() << "Schema executado com sucesso";
+        }
+    }
+
+    return true;
 }
 
 void MainWindow::setupUI()
@@ -33,7 +91,6 @@ void MainWindow::setupUI()
     menuLayout->setSpacing(20);
     menuLayout->setContentsMargins(50, 50, 50, 50);
 
-    // Logo/Título
     QLabel *titleLabel = new QLabel("AeroGestão");
     QFont titleFont = titleLabel->font();
     titleFont.setPointSize(36);
@@ -52,7 +109,6 @@ void MainWindow::setupUI()
 
     menuLayout->addSpacing(40);
 
-    // Botão Cliente
     QPushButton *clientButton = new QPushButton("Área do Cliente");
     clientButton->setMinimumHeight(60);
     clientButton->setMinimumWidth(300);
@@ -70,7 +126,6 @@ void MainWindow::setupUI()
     connect(clientButton, &QPushButton::clicked, this, &MainWindow::showClientPage);
     menuLayout->addWidget(clientButton, 0, Qt::AlignCenter);
 
-    // Botão Admin
     QPushButton *adminButton = new QPushButton("Área Administrativa");
     adminButton->setMinimumHeight(60);
     adminButton->setMinimumWidth(300);
@@ -99,7 +154,7 @@ void MainWindow::setupUI()
     stackedWidget->addWidget(menuPage);
 
     // Página do Cliente
-    clientPage = new ClientPage(database);
+    clientPage = new ClientPage(&db);
     connect(clientPage, &ClientPage::backToMenu, this, &MainWindow::showMenu);
     stackedWidget->addWidget(clientPage);
 
@@ -110,11 +165,13 @@ void MainWindow::setupUI()
     stackedWidget->addWidget(loginPage);
 
     // Página Admin
-    adminPage = new AdminPage(database);
+    adminPage = new AdminPage(&db);
     connect(adminPage, &AdminPage::backToMenu, this, &MainWindow::showMenu);
     stackedWidget->addWidget(adminPage);
 
     stackedWidget->setCurrentIndex(0);
+    setWindowTitle("AeroGestão");
+    setGeometry(100, 100, 900, 600);
 }
 
 void MainWindow::showMenu()

@@ -4,13 +4,13 @@
 #include <QLabel>
 #include <QMessageBox>
 #include <QFont>
-#include <QTabWidget>
 #include <QHeaderView>
-#include <QDate>
-#include <QTime>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QDebug>
 
-AdminPage::AdminPage(Database *db, QWidget *parent)
-    : QWidget(parent), database(db)
+AdminPage::AdminPage(QSqlDatabase *database, QWidget *parent)
+    : QWidget(parent), db(database)
 {
     setupUI();
     loadFlights();
@@ -22,7 +22,6 @@ void AdminPage::setupUI()
     mainLayout->setSpacing(15);
     mainLayout->setContentsMargins(20, 20, 20, 20);
 
-    // Título
     QLabel *titleLabel = new QLabel("Painel Administrativo");
     QFont titleFont = titleLabel->font();
     titleFont.setPointSize(20);
@@ -30,74 +29,63 @@ void AdminPage::setupUI()
     titleLabel->setFont(titleFont);
     mainLayout->addWidget(titleLabel);
 
-    // Abas
-    QTabWidget *tabWidget = new QTabWidget();
+    QLabel *addFlightLabel = new QLabel("Cadastrar Novo Voo:");
+    QFont sectionFont = addFlightLabel->font();
+    sectionFont.setPointSize(14);
+    sectionFont.setBold(true);
+    addFlightLabel->setFont(sectionFont);
+    mainLayout->addWidget(addFlightLabel);
 
-    // Aba 1: Cadastro de voos
-    QWidget *flightTab = new QWidget();
-    QVBoxLayout *flightLayout = new QVBoxLayout(flightTab);
-    flightLayout->setSpacing(10);
-
-    QLabel *addFlightLabel = new QLabel("Cadastrar Novo Voo");
-    QFont labelFont = addFlightLabel->font();
-    labelFont.setPointSize(14);
-    labelFont.setBold(true);
-    addFlightLabel->setFont(labelFont);
-    flightLayout->addWidget(addFlightLabel);
-
-    // Formulário
-    QHBoxLayout *formLayout1 = new QHBoxLayout();
-    formLayout1->addWidget(new QLabel("Código:"));
+    QHBoxLayout *formLayout = new QHBoxLayout();
+    
+    formLayout->addWidget(new QLabel("Código:"));
     codeInput = new QLineEdit();
-    codeInput->setPlaceholderText("Ex: AV-5000");
-    formLayout1->addWidget(codeInput);
-    flightLayout->addLayout(formLayout1);
+    codeInput->setPlaceholderText("Ex: AV-1000");
+    formLayout->addWidget(codeInput);
+
+    formLayout->addWidget(new QLabel("Origem:"));
+    originInput = new QLineEdit();
+    originInput->setPlaceholderText("Ex: São Paulo");
+    formLayout->addWidget(originInput);
+
+    formLayout->addWidget(new QLabel("Destino:"));
+    destinationInput = new QLineEdit();
+    destinationInput->setPlaceholderText("Ex: Rio de Janeiro");
+    formLayout->addWidget(destinationInput);
+
+    mainLayout->addLayout(formLayout);
 
     QHBoxLayout *formLayout2 = new QHBoxLayout();
-    formLayout2->addWidget(new QLabel("Origem:"));
-    originInput = new QLineEdit();
-    formLayout2->addWidget(originInput);
-    flightLayout->addLayout(formLayout2);
-
-    QHBoxLayout *formLayout3 = new QHBoxLayout();
-    formLayout3->addWidget(new QLabel("Destino:"));
-    destinationInput = new QLineEdit();
-    formLayout3->addWidget(destinationInput);
-    flightLayout->addLayout(formLayout3);
-
-    QHBoxLayout *formLayout4 = new QHBoxLayout();
-    formLayout4->addWidget(new QLabel("Data:"));
+    
+    formLayout2->addWidget(new QLabel("Data:"));
     dateInput = new QDateEdit();
-    dateInput->setDate(QDate::currentDate().addDays(1));
-    dateInput->setCalendarPopup(true);
-    formLayout4->addWidget(dateInput);
-    flightLayout->addLayout(formLayout4);
+    dateInput->setDate(QDate::currentDate());
+    formLayout2->addWidget(dateInput);
 
-    QHBoxLayout *formLayout5 = new QHBoxLayout();
-    formLayout5->addWidget(new QLabel("Hora:"));
+    formLayout2->addWidget(new QLabel("Hora:"));
     timeInput = new QTimeEdit();
-    timeInput->setTime(QTime(10, 0));
-    formLayout5->addWidget(timeInput);
-    flightLayout->addLayout(formLayout5);
+    timeInput->setTime(QTime(12, 0));
+    formLayout2->addWidget(timeInput);
 
-    QHBoxLayout *formLayout6 = new QHBoxLayout();
-    formLayout6->addWidget(new QLabel("Aeronave:"));
+    formLayout2->addWidget(new QLabel("Aeronave:"));
     aircraftCombo = new QComboBox();
-    QVector<Aircraft> aircraft = database->getAllAircraft();
-    for (const Aircraft &ac : aircraft) {
-        aircraftCombo->addItem(ac.model, ac.id);
-    }
-    formLayout6->addWidget(aircraftCombo);
-    flightLayout->addLayout(formLayout6);
+    formLayout2->addWidget(aircraftCombo);
 
-    QHBoxLayout *formLayout7 = new QHBoxLayout();
-    formLayout7->addWidget(new QLabel("Preço (R$):"));
+    formLayout2->addWidget(new QLabel("Preço:"));
     priceInput = new QDoubleSpinBox();
     priceInput->setMinimum(0);
     priceInput->setMaximum(10000);
     priceInput->setValue(500);
-    formLayout7->addWidget(priceInput);
-    flightLayout->addLayout(formLayout7);
+    formLayout2->addWidget(priceInput);
+
+    mainLayout->addLayout(formLayout2);
+
+    QSqlQuery query("SELECT id, model FROM aircraft");
+    while (query.next()) {
+        int id = query.value(0).toInt();
+        QString model = query.value(1).toString();
+        aircraftCombo->addItem(model, id);
+    }
 
     addFlightButton = new QPushButton("Adicionar Voo");
     addFlightButton->setMinimumHeight(40);
@@ -105,158 +93,141 @@ void AdminPage::setupUI()
         "QPushButton { "
         "  background-color: #4CAF50; "
         "  color: white; "
-        "  font-weight: bold; "
         "  border-radius: 5px; "
+        "  font-weight: bold; "
         "} "
         "QPushButton:hover { background-color: #45a049; } "
         "QPushButton:pressed { background-color: #3d8b40; }"
     );
     connect(addFlightButton, &QPushButton::clicked, this, &AdminPage::onAddFlightClicked);
-    flightLayout->addWidget(addFlightButton);
+    mainLayout->addWidget(addFlightButton);
 
-    flightLayout->addSpacing(20);
-
-    // Tabela de voos
-    QLabel *flightListLabel = new QLabel("Voos Cadastrados:");
-    QFont flightListFont = flightListLabel->font();
-    flightListFont.setPointSize(12);
-    flightListFont.setBold(true);
-    flightListLabel->setFont(flightListFont);
-    flightLayout->addWidget(flightListLabel);
+    QLabel *flightsLabel = new QLabel("Voos Cadastrados:");
+    flightsLabel->setFont(sectionFont);
+    mainLayout->addWidget(flightsLabel);
 
     flightsTable = new QTableWidget();
-    flightsTable->setColumnCount(8);
-    flightsTable->setHorizontalHeaderLabels({"ID", "Código", "Origem", "Destino", "Data", "Hora", "Preço", "Status"});
-    flightsTable->horizontalHeader()->setStretchLastSection(true);
-    flightsTable->setMinimumHeight(250);
-    connect(flightsTable, &QTableWidget::cellClicked, this, &AdminPage::onFlightSelectionChanged);
-    flightLayout->addWidget(flightsTable);
+    flightsTable->setColumnCount(7);
+    flightsTable->setHorizontalHeaderLabels({"ID", "Código", "Origem", "Destino", "Data", "Hora", "Preço"});
+    flightsTable->setMinimumHeight(200);
+    connect(flightsTable, &QTableWidget::itemSelectionChanged, this, &AdminPage::onFlightSelectionChanged);
+    mainLayout->addWidget(flightsTable);
 
-    tabWidget->addTab(flightTab, "Cadastro de Voos");
-
-    // Aba 2: Reservas
-    QWidget *reservationTab = new QWidget();
-    QVBoxLayout *reservationLayout = new QVBoxLayout(reservationTab);
-
-    QLabel *reservationLabel = new QLabel("Reservas por Voo");
-    QFont reservationFont = reservationLabel->font();
-    reservationFont.setPointSize(14);
-    reservationFont.setBold(true);
-    reservationLabel->setFont(reservationFont);
-    reservationLayout->addWidget(reservationLabel);
+    QLabel *reservationsLabel = new QLabel("Reservas do Voo Selecionado:");
+    reservationsLabel->setFont(sectionFont);
+    mainLayout->addWidget(reservationsLabel);
 
     reservationsTable = new QTableWidget();
     reservationsTable->setColumnCount(5);
-    reservationsTable->setHorizontalHeaderLabels({"ID", "Assento", "Passageiro", "CPF", "Data"});
-    reservationsTable->horizontalHeader()->setStretchLastSection(true);
-    reservationLayout->addWidget(reservationsTable);
+    reservationsTable->setHorizontalHeaderLabels({"ID", "Assento", "Passageiro", "CPF", "Voo"});
+    reservationsTable->setMinimumHeight(150);
+    mainLayout->addWidget(reservationsTable);
 
-    tabWidget->addTab(reservationTab, "Reservas");
-
-    mainLayout->addWidget(tabWidget);
-
-    // Botão de logout
-    QHBoxLayout *logoutLayout = new QHBoxLayout();
-    logoutLayout->addStretch();
-
-    QPushButton *logoutButton = new QPushButton("Sair");
+    QPushButton *logoutButton = new QPushButton("Logout");
     logoutButton->setMinimumHeight(40);
-    logoutButton->setMinimumWidth(150);
     logoutButton->setStyleSheet(
         "QPushButton { "
         "  background-color: #f44336; "
         "  color: white; "
-        "  font-weight: bold; "
         "  border-radius: 5px; "
+        "  font-weight: bold; "
         "} "
         "QPushButton:hover { background-color: #da190b; } "
         "QPushButton:pressed { background-color: #ba0000; }"
     );
     connect(logoutButton, &QPushButton::clicked, this, &AdminPage::onLogoutClicked);
-    logoutLayout->addWidget(logoutButton);
+    mainLayout->addWidget(logoutButton);
+}
 
-    mainLayout->addLayout(logoutLayout);
+void AdminPage::onAddFlightClicked()
+{
+    QString code = codeInput->text().trimmed();
+    QString origin = originInput->text().trimmed();
+    QString destination = destinationInput->text().trimmed();
+    QString date = dateInput->date().toString("yyyy-MM-dd");
+    QString time = timeInput->time().toString("HH:mm");
+    int aircraftId = aircraftCombo->currentData().toInt();
+    double price = priceInput->value();
 
-    setStyleSheet("QWidget { background-color: #f5f5f5; }");
+    if (code.isEmpty() || origin.isEmpty() || destination.isEmpty()) {
+        QMessageBox::warning(this, "Erro", "Preencha todos os campos!");
+        return;
+    }
+
+    QSqlQuery query;
+    query.prepare("INSERT INTO flights (code, origin, destination, date, time, aircraft_id, price, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'Aberto')");
+    query.addBindValue(code);
+    query.addBindValue(origin);
+    query.addBindValue(destination);
+    query.addBindValue(date);
+    query.addBindValue(time);
+    query.addBindValue(aircraftId);
+    query.addBindValue(price);
+
+    if (query.exec()) {
+        QMessageBox::information(this, "Sucesso", "Voo adicionado com sucesso!");
+        codeInput->clear();
+        originInput->clear();
+        destinationInput->clear();
+        priceInput->setValue(500);
+        loadFlights();
+    } else {
+        QMessageBox::critical(this, "Erro", "Falha ao adicionar voo: " + query.lastError().text());
+    }
+}
+
+void AdminPage::onFlightSelectionChanged()
+{
+    if (flightsTable->selectedItems().isEmpty()) {
+        reservationsTable->clearContents();
+        return;
+    }
+
+    int row = flightsTable->currentRow();
+    int flightId = flightsTable->item(row, 0)->text().toInt();
+    updateReservationsList(flightId);
 }
 
 void AdminPage::loadFlights()
 {
-    updateFlightsList();
-}
-
-void AdminPage::updateFlightsList()
-{
     flightsTable->setRowCount(0);
-    QVector<Flight> flights = database->getAllFlights();
+    
+    QSqlQuery query("SELECT id, code, origin, destination, date, time, price FROM flights ORDER BY date, time");
+    int row = 0;
 
-    for (int i = 0; i < flights.size(); ++i) {
-        flightsTable->insertRow(i);
-
-        flightsTable->setItem(i, 0, new QTableWidgetItem(QString::number(flights[i].id)));
-        flightsTable->setItem(i, 1, new QTableWidgetItem(flights[i].code));
-        flightsTable->setItem(i, 2, new QTableWidgetItem(flights[i].origin));
-        flightsTable->setItem(i, 3, new QTableWidgetItem(flights[i].destination));
-        flightsTable->setItem(i, 4, new QTableWidgetItem(flights[i].date));
-        flightsTable->setItem(i, 5, new QTableWidgetItem(flights[i].time));
-        flightsTable->setItem(i, 6, new QTableWidgetItem(QString::number(flights[i].price, 'f', 2)));
-        flightsTable->setItem(i, 7, new QTableWidgetItem(flights[i].status));
+    while (query.next()) {
+        flightsTable->insertRow(row);
+        flightsTable->setItem(row, 0, new QTableWidgetItem(QString::number(query.value(0).toInt())));
+        flightsTable->setItem(row, 1, new QTableWidgetItem(query.value(1).toString()));
+        flightsTable->setItem(row, 2, new QTableWidgetItem(query.value(2).toString()));
+        flightsTable->setItem(row, 3, new QTableWidgetItem(query.value(3).toString()));
+        flightsTable->setItem(row, 4, new QTableWidgetItem(query.value(4).toString()));
+        flightsTable->setItem(row, 5, new QTableWidgetItem(query.value(5).toString()));
+        flightsTable->setItem(row, 6, new QTableWidgetItem(QString::number(query.value(6).toDouble(), 'f', 2)));
+        row++;
     }
 }
 
 void AdminPage::updateReservationsList(int flightId)
 {
     reservationsTable->setRowCount(0);
-    QVector<Reservation> reservations = database->getFlightReservations(flightId);
-
-    for (int i = 0; i < reservations.size(); ++i) {
-        reservationsTable->insertRow(i);
-
-        reservationsTable->setItem(i, 0, new QTableWidgetItem(QString::number(reservations[i].id)));
-        reservationsTable->setItem(i, 1, new QTableWidgetItem(reservations[i].seatCode));
-        reservationsTable->setItem(i, 2, new QTableWidgetItem(reservations[i].passengerName));
-        reservationsTable->setItem(i, 3, new QTableWidgetItem(reservations[i].passengerDocument));
-        reservationsTable->setItem(i, 4, new QTableWidgetItem(""));
+    
+    QSqlQuery query;
+    query.prepare("SELECT id, seat_code, passenger_name, passenger_document, flight_id FROM reservations WHERE flight_id = ?");
+    query.addBindValue(flightId);
+    
+    int row = 0;
+    if (query.exec()) {
+        while (query.next()) {
+            reservationsTable->insertRow(row);
+            reservationsTable->setItem(row, 0, new QTableWidgetItem(QString::number(query.value(0).toInt())));
+            reservationsTable->setItem(row, 1, new QTableWidgetItem(query.value(1).toString()));
+            reservationsTable->setItem(row, 2, new QTableWidgetItem(query.value(2).toString()));
+            reservationsTable->setItem(row, 3, new QTableWidgetItem(query.value(3).toString()));
+            reservationsTable->setItem(row, 4, new QTableWidgetItem(QString::number(query.value(4).toInt())));
+            row++;
+        }
     }
-}
-
-void AdminPage::onAddFlightClicked()
-{
-    if (codeInput->text().isEmpty() || originInput->text().isEmpty() ||
-        destinationInput->text().isEmpty()) {
-        QMessageBox::warning(this, "Erro", "Preencha todos os campos!");
-        return;
-    }
-
-    Flight flight;
-    flight.code = codeInput->text();
-    flight.origin = originInput->text();
-    flight.destination = destinationInput->text();
-    flight.date = dateInput->date().toString("yyyy-MM-dd");
-    flight.time = timeInput->time().toString("HH:mm");
-    flight.aircraftId = aircraftCombo->currentData().toInt();
-    flight.price = priceInput->value();
-    flight.status = "Aberto";
-
-    if (database->addFlight(flight)) {
-        QMessageBox::information(this, "Sucesso", "Voo adicionado com sucesso!");
-        codeInput->clear();
-        originInput->clear();
-        destinationInput->clear();
-        priceInput->setValue(500);
-        updateFlightsList();
-    } else {
-        QMessageBox::critical(this, "Erro", "Falha ao adicionar voo!");
-    }
-}
-
-void AdminPage::onFlightSelectionChanged()
-{
-    int row = flightsTable->currentRow();
-    if (row < 0) return;
-
-    int flightId = flightsTable->item(row, 0)->text().toInt();
-    updateReservationsList(flightId);
 }
 
 void AdminPage::onLogoutClicked()
@@ -266,5 +237,5 @@ void AdminPage::onLogoutClicked()
 
 void AdminPage::refreshData()
 {
-    updateFlightsList();
+    loadFlights();
 }

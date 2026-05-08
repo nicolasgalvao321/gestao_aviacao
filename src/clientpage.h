@@ -7,14 +7,14 @@
 #include <QPushButton>
 #include <QLineEdit>
 #include <QLabel>
-#include "database.h"
+#include <QSqlDatabase>
 
 class ClientPage : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit ClientPage(Database *db, QWidget *parent = nullptr);
+    explicit ClientPage(QSqlDatabase *database, QWidget *parent = nullptr);
 
 signals:
     void backToMenu();
@@ -28,7 +28,7 @@ private slots:
     void displaySeats();
 
 private:
-    Database *database;
+    QSqlDatabase *db;
     QComboBox *flightCombo;
     QTableWidget *seatsTable;
     QLineEdit *nameInput;

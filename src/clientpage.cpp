@@ -5,9 +5,12 @@
 #include <QMessageBox>
 #include <QFont>
 #include <QHeaderView>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QDebug>
 
-ClientPage::ClientPage(Database *db, QWidget *parent)
-    : QWidget(parent), database(db)
+ClientPage::ClientPage(QSqlDatabase *database, QWidget *parent)
+    : QWidget(parent), db(database)
 {
     setupUI();
     loadFlights();
@@ -19,7 +22,6 @@ void ClientPage::setupUI()
     mainLayout->setSpacing(15);
     mainLayout->setContentsMargins(20, 20, 20, 20);
 
-    // Título
     QLabel *titleLabel = new QLabel("Reserva de Assentos");
     QFont titleFont = titleLabel->font();
     titleFont.setPointSize(20);
@@ -27,7 +29,6 @@ void ClientPage::setupUI()
     titleLabel->setFont(titleFont);
     mainLayout->addWidget(titleLabel);
 
-    // Seção de seleção de voo
     QLabel *flightLabel = new QLabel("Selecione um voo:");
     mainLayout->addWidget(flightLabel);
 
@@ -37,7 +38,6 @@ void ClientPage::setupUI()
             this, &ClientPage::onFlightSelected);
     mainLayout->addWidget(flightCombo);
 
-    // Tabela de assentos
     QLabel *seatsLabel = new QLabel("Mapa de Assentos:");
     mainLayout->addWidget(seatsLabel);
 
@@ -50,48 +50,39 @@ void ClientPage::setupUI()
     for (int i = 0; i < 8; ++i) {
         seatsTable->setColumnWidth(i, 50);
     }
-    for (int i = 0; i < 6; ++i) {
-        seatsTable->setRowHeight(i, 50);
-    }
     connect(seatsTable, &QTableWidget::itemClicked, this, &ClientPage::onSeatClicked);
     mainLayout->addWidget(seatsTable);
 
-    // Assento selecionado
+    QHBoxLayout *reservationLayout = new QHBoxLayout();
+    
+    QLabel *nameLabel = new QLabel("Nome:");
+    nameInput = new QLineEdit();
+    nameInput->setPlaceholderText("Digite seu nome");
+    reservationLayout->addWidget(nameLabel);
+    reservationLayout->addWidget(nameInput);
+
+    QLabel *docLabel = new QLabel("CPF:");
+    documentInput = new QLineEdit();
+    documentInput->setPlaceholderText("Digite seu CPF");
+    reservationLayout->addWidget(docLabel);
+    reservationLayout->addWidget(documentInput);
+
+    mainLayout->addLayout(reservationLayout);
+
     selectedSeatLabel = new QLabel("Assento selecionado: Nenhum");
     selectedSeatLabel->setStyleSheet("color: #2196F3; font-weight: bold;");
     mainLayout->addWidget(selectedSeatLabel);
 
-    // Dados do passageiro
-    QLabel *passengerLabel = new QLabel("Dados do Passageiro:");
-    mainLayout->addWidget(passengerLabel);
-
-    QHBoxLayout *nameLayout = new QHBoxLayout();
-    nameLayout->addWidget(new QLabel("Nome:"));
-    nameInput = new QLineEdit();
-    nameInput->setMinimumHeight(35);
-    nameLayout->addWidget(nameInput);
-    mainLayout->addLayout(nameLayout);
-
-    QHBoxLayout *docLayout = new QHBoxLayout();
-    docLayout->addWidget(new QLabel("CPF:"));
-    documentInput = new QLineEdit();
-    documentInput->setMinimumHeight(35);
-    documentInput->setPlaceholderText("000.000.000-00");
-    docLayout->addWidget(documentInput);
-    mainLayout->addLayout(docLayout);
-
-    // Botões
     QHBoxLayout *buttonLayout = new QHBoxLayout();
-    buttonLayout->setSpacing(10);
-
+    
     reserveButton = new QPushButton("Confirmar Reserva");
     reserveButton->setMinimumHeight(40);
     reserveButton->setStyleSheet(
         "QPushButton { "
         "  background-color: #4CAF50; "
         "  color: white; "
-        "  font-weight: bold; "
         "  border-radius: 5px; "
+        "  font-weight: bold; "
         "} "
         "QPushButton:hover { background-color: #45a049; } "
         "QPushButton:pressed { background-color: #3d8b40; }"
@@ -101,13 +92,12 @@ void ClientPage::setupUI()
 
     backButton = new QPushButton("Voltar");
     backButton->setMinimumHeight(40);
-    backButton->setMinimumWidth(150);
     backButton->setStyleSheet(
         "QPushButton { "
         "  background-color: #f44336; "
         "  color: white; "
-        "  font-weight: bold; "
         "  border-radius: 5px; "
+        "  font-weight: bold; "
         "} "
         "QPushButton:hover { background-color: #da190b; } "
         "QPushButton:pressed { background-color: #ba0000; }"
@@ -116,35 +106,35 @@ void ClientPage::setupUI()
     buttonLayout->addWidget(backButton);
 
     mainLayout->addLayout(buttonLayout);
-    mainLayout->addStretch();
-
-    setStyleSheet("QWidget { background-color: #f5f5f5; }");
 }
 
 void ClientPage::loadFlights()
 {
-    updateFlightsList();
-}
-
-void ClientPage::updateFlightsList()
-{
     flightCombo->clear();
-    QVector<Flight> flights = database->getAllFlights();
-
-    for (const Flight &flight : flights) {
+    
+    QSqlQuery query("SELECT id, code, origin, destination, date, time, price FROM flights ORDER BY date, time");
+    
+    while (query.next()) {
+        int id = query.value(0).toInt();
+        QString code = query.value(1).toString();
+        QString origin = query.value(2).toString();
+        QString destination = query.value(3).toString();
+        QString date = query.value(4).toString();
+        QString time = query.value(5).toString();
+        double price = query.value(6).toDouble();
+        
         QString displayText = QString("%1 - %2 → %3 (%4 às %5) - R$ %.2f")
-                                  .arg(flight.code, flight.origin, flight.destination,
-                                       flight.date, flight.time)
-                                  .arg(flight.price);
-        flightCombo->addItem(displayText, flight.id);
+            .arg(code, origin, destination, date, time).arg(price);
+        
+        flightCombo->addItem(displayText, id);
     }
 }
 
 void ClientPage::onFlightSelected(int index)
 {
     if (index < 0) return;
-
-    currentFlightId = flightCombo->itemData(index).toInt();
+    
+    currentFlightId = flightCombo->currentData().toInt();
     selectedSeat = "";
     selectedSeatLabel->setText("Assento selecionado: Nenhum");
     displaySeats();
@@ -152,45 +142,56 @@ void ClientPage::onFlightSelected(int index)
 
 void ClientPage::displaySeats()
 {
-    if (currentFlightId < 0) return;
-
-    QVector<Seat> seats = database->getFlightSeats(currentFlightId);
-
-    // Limpar tabela
-    for (int row = 0; row < seatsTable->rowCount(); ++row) {
-        for (int col = 0; col < seatsTable->columnCount(); ++col) {
-            seatsTable->setItem(row, col, nullptr);
+    seatsTable->clearContents();
+    
+    QSqlQuery query;
+    query.prepare("SELECT code FROM seats WHERE aircraft_id = (SELECT aircraft_id FROM flights WHERE id = ?) ORDER BY code");
+    query.addBindValue(currentFlightId);
+    
+    QStringList reservedSeats;
+    QSqlQuery reservedQuery;
+    reservedQuery.prepare("SELECT seat_code FROM reservations WHERE flight_id = ?");
+    reservedQuery.addBindValue(currentFlightId);
+    
+    if (reservedQuery.exec()) {
+        while (reservedQuery.next()) {
+            reservedSeats.append(reservedQuery.value(0).toString());
         }
     }
-
-    // Preencher assentos
-    for (int i = 0; i < seats.size() && i < 48; ++i) {
-        int row = i / 8;
-        int col = i % 8;
-
-        QTableWidgetItem *item = new QTableWidgetItem(seats[i].code);
-        item->setTextAlignment(Qt::AlignCenter);
-
-        if (seats[i].reserved) {
-            item->setBackground(QColor("#f44336"));
-            item->setForeground(QColor("white"));
-            item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
-        } else {
-            item->setBackground(QColor("#4CAF50"));
-            item->setForeground(QColor("white"));
+    
+    if (query.exec()) {
+        int row = 0, col = 0;
+        while (query.next()) {
+            QString seatCode = query.value(0).toString();
+            QTableWidgetItem *item = new QTableWidgetItem(seatCode);
+            
+            if (reservedSeats.contains(seatCode)) {
+                item->setBackground(QColor("#f44336"));
+                item->setForeground(QColor("white"));
+                item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
+            } else {
+                item->setBackground(QColor("#4CAF50"));
+                item->setForeground(QColor("white"));
+            }
+            
+            seatsTable->setItem(row, col, item);
+            
+            col++;
+            if (col >= 8) {
+                col = 0;
+                row++;
+            }
         }
-
-        seatsTable->setItem(row, col, item);
     }
 }
 
 void ClientPage::onSeatClicked(QTableWidgetItem *item)
 {
     if (item->background().color() == QColor("#f44336")) {
-        QMessageBox::warning(this, "Aviso", "Este assento já está reservado!");
+        QMessageBox::warning(this, "Assento Indisponível", "Este assento já está reservado!");
         return;
     }
-
+    
     selectedSeat = item->text();
     selectedSeatLabel->setText(QString("Assento selecionado: %1").arg(selectedSeat));
 }
@@ -201,42 +202,39 @@ void ClientPage::onReserveClicked()
         QMessageBox::warning(this, "Erro", "Selecione um voo!");
         return;
     }
-
+    
     if (selectedSeat.isEmpty()) {
         QMessageBox::warning(this, "Erro", "Selecione um assento!");
         return;
     }
-
-    if (nameInput->text().isEmpty()) {
-        QMessageBox::warning(this, "Erro", "Digite seu nome!");
+    
+    QString name = nameInput->text().trimmed();
+    QString document = documentInput->text().trimmed();
+    
+    if (name.isEmpty() || document.isEmpty()) {
+        QMessageBox::warning(this, "Erro", "Preencha nome e CPF!");
         return;
     }
-
-    if (documentInput->text().isEmpty()) {
-        QMessageBox::warning(this, "Erro", "Digite seu CPF!");
-        return;
-    }
-
-    bool success = database->addReservation(currentFlightId, selectedSeat,
-                                            nameInput->text(), documentInput->text());
-
-    if (success) {
-        QMessageBox::information(this, "Sucesso", 
-                                QString("Reserva confirmada!\nAssento: %1").arg(selectedSeat));
+    
+    QSqlQuery query;
+    query.prepare("INSERT INTO reservations (flight_id, seat_code, passenger_name, passenger_document) VALUES (?, ?, ?, ?)");
+    query.addBindValue(currentFlightId);
+    query.addBindValue(selectedSeat);
+    query.addBindValue(name);
+    query.addBindValue(document);
+    
+    if (query.exec()) {
+        QMessageBox::information(this, "Sucesso", "Reserva confirmada!");
         nameInput->clear();
         documentInput->clear();
         selectedSeat = "";
-        selectedSeatLabel->setText("Assento selecionado: Nenhum");
         displaySeats();
     } else {
-        QMessageBox::critical(this, "Erro", "Falha ao confirmar reserva. Tente novamente!");
+        QMessageBox::critical(this, "Erro", "Falha ao fazer reserva: " + query.lastError().text());
     }
 }
 
 void ClientPage::onBackClicked()
 {
-    nameInput->clear();
-    documentInput->clear();
-    selectedSeat = "";
     emit backToMenu();
 }

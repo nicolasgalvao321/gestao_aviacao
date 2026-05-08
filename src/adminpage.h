@@ -9,14 +9,14 @@
 #include <QDateEdit>
 #include <QTimeEdit>
 #include <QDoubleSpinBox>
-#include "database.h"
+#include <QSqlDatabase>
 
 class AdminPage : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit AdminPage(Database *db, QWidget *parent = nullptr);
+    explicit AdminPage(QSqlDatabase *database, QWidget *parent = nullptr);
 
 signals:
     void backToMenu();
@@ -30,9 +30,8 @@ private slots:
     void refreshData();
 
 private:
-    Database *database;
+    QSqlDatabase *db;
 
-    // Widgets para cadastro de voo
     QLineEdit *codeInput;
     QLineEdit *originInput;
     QLineEdit *destinationInput;
@@ -42,7 +41,6 @@ private:
     QDoubleSpinBox *priceInput;
     QPushButton *addFlightButton;
 
-    // Tabelas
     QTableWidget *flightsTable;
     QTableWidget *reservationsTable;
 

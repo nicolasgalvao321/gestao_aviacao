@@ -3,10 +3,11 @@
 
 #include <QMainWindow>
 #include <QStackedWidget>
-#include "database.h"
-#include "clientpage.h"
-#include "adminpage.h"
-#include "loginpage.h"
+#include <QSqlDatabase>
+
+class ClientPage;
+class AdminPage;
+class LoginPage;
 
 class MainWindow : public QMainWindow
 {
@@ -24,9 +25,10 @@ private slots:
 
 private:
     void setupUI();
+    bool initializeDatabase();
 
     QStackedWidget *stackedWidget;
-    Database *database;
+    QSqlDatabase db;
     ClientPage *clientPage;
     AdminPage *adminPage;
     LoginPage *loginPage;

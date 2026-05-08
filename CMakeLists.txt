@@ -22,8 +22,6 @@ set(PROJECT_SOURCES
     src/clientpage.cpp
     src/adminpage.h
     src/adminpage.cpp
-    src/database.h
-    src/database.cpp
     src/loginpage.h
     src/loginpage.cpp
 )
