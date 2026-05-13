@@ -4,9 +4,6 @@ project(AeroGestao)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Crow (header-only library)
-include_directories(${CMAKE_SOURCE_DIR}/backend/include)
-
 # SQLite3
 find_package(SQLite3 REQUIRED)
 
@@ -19,6 +16,11 @@ add_executable(aerogestao-server
 target_link_libraries(aerogestao-server
     SQLite::SQLite3
 )
+
+# Windows specific
+if(WIN32)
+    target_link_libraries(aerogestao-server ws2_32)
+endif()
 
 # Copy frontend files to build directory
 add_custom_target(copy_frontend ALL
