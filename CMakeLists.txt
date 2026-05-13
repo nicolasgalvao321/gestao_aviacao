@@ -2,39 +2,29 @@ cmake_minimum_required(VERSION 3.16)
 project(AeroGestao)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 COMPONENTS
-    Core
-    Gui
-    Widgets
-    Sql
-    REQUIRED
+# Crow (header-only library)
+include_directories(${CMAKE_SOURCE_DIR}/backend/include)
+
+# SQLite3
+find_package(SQLite3 REQUIRED)
+
+# Backend executable
+add_executable(aerogestao-server
+    backend/src/main.cpp
+    backend/src/database.cpp
 )
 
-set(PROJECT_SOURCES
-    src/main.cpp
-    src/mainwindow.h
-    src/mainwindow.cpp
-    src/clientpage.h
-    src/clientpage.cpp
-    src/adminpage.h
-    src/adminpage.cpp
-    src/loginpage.h
-    src/loginpage.cpp
+target_link_libraries(aerogestao-server
+    SQLite::SQLite3
 )
 
-set(PROJECT_RESOURCES
-    resources.qrc
+# Copy frontend files to build directory
+add_custom_target(copy_frontend ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/frontend
+    ${CMAKE_BINARY_DIR}/frontend
 )
 
-add_executable(AeroGestao ${PROJECT_SOURCES} ${PROJECT_RESOURCES})
-
-target_link_libraries(AeroGestao
-    Qt6::Core
-    Qt6::Gui
-    Qt6::Widgets
-    Qt6::Sql
-)
+add_dependencies(aerogestao-server copy_frontend)

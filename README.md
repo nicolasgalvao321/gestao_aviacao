@@ -1,173 +1,192 @@
-# AeroGestão — Aplicação Desktop em C/C++ com Qt
+# AeroGestão - Sistema de Gestão de Aviação
 
-Sistema de gestão de aviação com interface gráfica em Qt, banco de dados SQLite integrado e duas áreas: cliente e administrador.
+Aplicação web para gestão de voos e reserva de assentos com backend em C++ e frontend em HTML/CSS/JavaScript.
 
-## Requisitos
+## Arquitetura
 
-- **Qt 6.x** (Core, Gui, Widgets, Sql)
-- **CMake** 3.16+
-- **Compilador C++** (GCC, Clang ou MSVC)
-- **SQLite** (incluído no Qt)
-
-## Instalação no CLion
-
-### 1. Abrir o projeto
-
-- Abra o CLion
-- Clique em **File → Open**
-- Navegue até a pasta `AeroGestao_Qt` e abra
-
-### 2. Configurar o Kit
-
-- Vá para **File → Settings → Project: AeroGestao → CMake**
-- Certifique-se de que o **Toolchain** está configurado corretamente
-- Se não encontrar Qt, clique em **CMake → Reload CMake Project**
-
-### 3. Compilar
-
-- Clique em **Build → Build Project** (Ctrl+F9)
-- Ou use o botão de build na barra de ferramentas
-
-### 4. Executar
-
-- Clique em **Run → Run** (Shift+F10)
-- Ou clique no botão verde de play
+- **Frontend**: HTML/CSS/JavaScript (roda no navegador)
+- **Backend**: C++ com Crow (servidor HTTP)
+- **Banco de dados**: SQLite3
+- **API**: RESTful em JSON
 
 ## Estrutura do Projeto
 
 ```
-AeroGestao_Qt/
-├── CMakeLists.txt          # Configuração CMake
-├── src/
-│   ├── main.cpp            # Ponto de entrada
-│   ├── mainwindow.h/.cpp   # Janela principal
-│   ├── clientpage.h/.cpp   # Página do cliente
-│   ├── adminpage.h/.cpp    # Página do admin
-│   ├── loginpage.h/.cpp    # Página de login
-│   └── database.h/.cpp     # Gerenciador de banco de dados
-└── README.md               # Este arquivo
+gestao_aviacao/
+├── frontend/
+│   ├── index.html       # Interface web
+│   ├── styles.css       # Estilos
+│   └── app.js          # Lógica JavaScript
+├── backend/
+│   ├── src/
+│   │   ├── main.cpp    # Servidor HTTP
+│   │   ├── database.h  # Header do banco
+│   │   └── database.cpp # Implementação do banco
+│   └── include/        # Bibliotecas externas (Crow, nlohmann/json)
+├── CMakeLists.txt      # Configuração CMake
+└── README.md           # Este arquivo
+```
+
+## Requisitos
+
+- **CMake** 3.16+
+- **C++17** ou superior
+- **SQLite3**
+- **Crow** (header-only, já incluído)
+- **nlohmann/json** (header-only, já incluído)
+
+### Windows (MinGW com CLion)
+
+CLion já vem com MinGW, CMake e Ninja. Apenas certifique-se de ter SQLite3 instalado.
+
+### Linux
+
+```bash
+sudo apt-get install cmake g++ sqlite3 libsqlite3-dev
+```
+
+### macOS
+
+```bash
+brew install cmake sqlite3
+```
+
+## Compilação
+
+### No CLion
+
+1. Abra o projeto em CLion
+2. Clique em **Build → Build Project** (Ctrl+F9)
+3. A aplicação será compilada em `cmake-build-debug/`
+
+### Via Terminal
+
+```bash
+mkdir build
+cd build
+cmake ..
+cmake --build .
+```
+
+## Execução
+
+### Backend (Servidor C++)
+
+```bash
+# No CLion: Shift+F10 ou Run → Run
+# Via terminal:
+./cmake-build-debug/aerogestao-server
+```
+
+O servidor iniciará em `http://localhost:8080`
+
+### Frontend
+
+Abra o arquivo `frontend/index.html` no navegador ou sirva com um servidor local:
+
+```bash
+# Com Python 3
+python -m http.server 8000 --directory frontend
+
+# Com Node.js
+npx http-server frontend
+```
+
+Acesse `http://localhost:8000`
+
+## API Endpoints
+
+### Voos
+
+- `GET /api/flights` - Listar todos os voos
+- `GET /api/flights/<id>` - Obter voo específico
+- `POST /api/flights` - Criar novo voo
+
+**Exemplo POST:**
+```json
+{
+  "code": "AV-1003",
+  "origin": "São Paulo",
+  "destination": "Salvador",
+  "date": "2026-05-20",
+  "time": "14:00",
+  "price": 450.00
+}
+```
+
+### Reservas
+
+- `GET /api/reservations` - Listar todas as reservas
+- `GET /api/reservations/flight/<id>` - Reservas de um voo específico
+- `POST /api/reservations` - Criar nova reserva
+- `DELETE /api/reservations/<id>` - Cancelar reserva
+
+**Exemplo POST:**
+```json
+{
+  "flight_id": 1,
+  "seat_code": "1A",
+  "passenger_name": "João Silva",
+  "passenger_document": "12345678900"
+}
 ```
 
 ## Funcionalidades
 
-### Área do Cliente
-
+### Página do Cliente
 - ✅ Listar voos disponíveis
-- ✅ Selecionar voo
-- ✅ Visualizar mapa de assentos (disponíveis e reservados)
+- ✅ Visualizar mapa de assentos
 - ✅ Selecionar assento
-- ✅ Preencher dados do passageiro (nome e CPF)
+- ✅ Preencher dados do passageiro
 - ✅ Confirmar reserva
 
-### Área Administrativa
-
-- ✅ Login com senha: **admin123**
-- ✅ Cadastrar novos voos
+### Página do Admin (Senha: admin123)
+- ✅ Cadastrar novo voo
 - ✅ Visualizar lista de voos
-- ✅ Visualizar reservas por voo
-- ✅ Gerenciar aeronaves
+- ✅ Ver reservas por voo
+- ✅ Cancelar reservas
 
 ## Banco de Dados
 
-O banco SQLite é criado automaticamente em:
+O banco SQLite é criado automaticamente na primeira execução com as seguintes tabelas:
 
-**Linux/Mac:** `~/.local/share/AeroGestao/aviacao.db`
-**Windows:** `%APPDATA%/AeroGestao/aviacao.db`
-
-### Tabelas
-
-- **aircraft** — Modelos de aeronaves
-- **flights** — Voos cadastrados
-- **seats** — Assentos disponíveis
-- **reservations** — Reservas feitas
-
-## Dados de Exemplo
-
-Na primeira execução, o sistema cria automaticamente:
-
-- 3 aeronaves (A320 Neo, B737-800, E195-E2)
-- 4 voos de exemplo
-- Assentos gerados para cada aeronave
-- 2 reservas de exemplo
-
-## Senha de Admin
-
-**Usuário:** admin
-**Senha:** admin123
+- **aircraft**: Modelos de aeronaves
+- **flights**: Voos cadastrados
+- **seats**: Assentos dos voos
+- **reservations**: Reservas de passageiros
 
 ## Troubleshooting
 
-### Erro: "Qt not found"
-
-Instale Qt6:
-
+### Erro: "SQLite3 não encontrado"
+Instale SQLite3 dev:
 ```bash
-# Ubuntu/Debian
-sudo apt-get install qt6-base-dev qt6-sql-dev
-
-# macOS (com Homebrew)
-brew install qt6
-
-# Windows
-Baixe em: https://www.qt.io/download
-```
-
-### Erro: "CMake not found"
-
-Instale CMake:
-
-```bash
-# Ubuntu/Debian
-sudo apt-get install cmake
+# Linux
+sudo apt-get install libsqlite3-dev
 
 # macOS
-brew install cmake
-
-# Windows
-Baixe em: https://cmake.org/download/
+brew install sqlite3
 ```
 
-### Erro ao compilar: "cannot find -lQt6Sql"
+### Porta 8080 já em uso
+Modifique em `backend/src/main.cpp` a linha:
+```cpp
+app.port(8080).multithreaded().run();
+```
 
-Certifique-se de que o Qt está instalado corretamente e configure o CMake path no CLion.
+### Frontend não conecta ao backend
+Certifique-se de que:
+1. O backend está rodando em `http://localhost:8080`
+2. O frontend está em `http://localhost:8000` (ou outro servidor local)
+3. O CORS está habilitado (já está no código)
 
 ## Desenvolvimento
 
-### Adicionar nova funcionalidade
+Para adicionar novas funcionalidades:
 
-1. Crie os arquivos `.h` e `.cpp` em `src/`
-2. Adicione ao `CMakeLists.txt` na lista `PROJECT_SOURCES`
-3. Recarregue o projeto CMake
-4. Compile e teste
-
-### Modificar banco de dados
-
-Edite `database.cpp` nas funções `createTables()` e `insertSampleData()`.
-
-## Compilação em linha de comando
-
-```bash
-cd AeroGestao_Qt
-mkdir build
-cd build
-cmake ..
-make
-./AeroGestao
-```
-
-## Próximos passos
-
-- Adicionar autenticação de usuário
-- Implementar relatórios de voos
-- Adicionar integração com pagamento
-- Melhorar interface com temas
-- Adicionar busca avançada de voos
+1. Adicione métodos em `backend/src/database.h` e `database.cpp`
+2. Crie novas rotas em `backend/src/main.cpp`
+3. Atualize o frontend em `frontend/app.js`
 
 ## Licença
 
-MIT License - Livre para usar e modificar.
-
-## Suporte
-
-Para dúvidas ou problemas, consulte a documentação do Qt:
-https://doc.qt.io/qt-6/
+MIT
