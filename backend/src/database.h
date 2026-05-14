@@ -4,8 +4,6 @@
 #include <sqlite3.h>
 #include <string>
 #include <vector>
-#include <map>
-#include <memory>
 
 struct Flight {
     int id;

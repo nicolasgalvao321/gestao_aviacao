@@ -4,8 +4,6 @@
 #include <sstream>
 #include <vector>
 #include <map>
-#include <cstring>
-#include <algorithm>
 
 #ifdef _WIN32
     #include <winsock2.h>
