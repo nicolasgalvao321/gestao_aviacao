@@ -1,16 +1,16 @@
 cmake_minimum_required(VERSION 3.16)
-project(AeroGestao)
+project(AeroGestao C)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # SQLite3
 find_package(SQLite3 REQUIRED)
 
 # Backend executable
 add_executable(aerogestao-server
-    backend/src/main.cpp
-    backend/src/database.cpp
+    backend/src/main.c
+    backend/src/database.c
 )
 
 target_link_libraries(aerogestao-server

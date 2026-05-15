@@ -2,59 +2,49 @@
 #define DATABASE_H
 
 #include <sqlite3.h>
-#include <string>
-#include <vector>
 
-struct Flight {
+typedef struct {
     int id;
-    std::string code;
-    std::string origin;
-    std::string destination;
-    std::string date;
-    std::string time;
+    char code[50];
+    char origin[50];
+    char destination[50];
+    char date[20];
+    char time[20];
     double price;
-    std::vector<std::string> reserved_seats;
-};
+} Flight;
 
-struct Reservation {
+typedef struct {
     int id;
     int flight_id;
-    std::string seat_code;
-    std::string passenger_name;
-    std::string passenger_document;
-};
+    char seat_code[10];
+    char passenger_name[100];
+    char passenger_document[20];
+} Reservation;
 
-class Database {
-public:
-    Database(const std::string& db_path = "aviacao.db");
-    ~Database();
+typedef struct {
+    sqlite3 *db;
+    char db_path[256];
+} Database;
 
-    bool init();
-    
-    // Flights
-    std::vector<Flight> getFlights();
-    Flight getFlightById(int id);
-    bool addFlight(const std::string& code, const std::string& origin, 
-                   const std::string& destination, const std::string& date, 
-                   const std::string& time, double price);
-    
-    // Reservations
-    std::vector<Reservation> getReservations();
-    std::vector<Reservation> getReservationsByFlight(int flight_id);
-    bool addReservation(int flight_id, const std::string& seat_code,
-                       const std::string& passenger_name, 
-                       const std::string& passenger_document);
-    bool cancelReservation(int reservation_id);
-    
-    // Seats
-    std::vector<std::string> getReservedSeats(int flight_id);
+// Database functions
+Database* db_create(const char *db_path);
+int db_init(Database *db);
+void db_close(Database *db);
 
-private:
-    sqlite3* db;
-    std::string db_path;
-    
-    bool createTables();
-    bool insertSampleData();
-};
+// Flight functions
+Flight* db_get_flights(Database *db, int *count);
+int db_add_flight(Database *db, const char *code, const char *origin, 
+                  const char *destination, const char *date, 
+                  const char *time, double price);
+
+// Reservation functions
+Reservation* db_get_reservations(Database *db, int *count);
+int db_add_reservation(Database *db, int flight_id, const char *seat_code,
+                       const char *passenger_name, const char *passenger_document);
+int db_cancel_reservation(Database *db, int reservation_id);
+
+// Utility functions
+void db_free_flights(Flight *flights);
+void db_free_reservations(Reservation *reservations);
 
 #endif // DATABASE_H

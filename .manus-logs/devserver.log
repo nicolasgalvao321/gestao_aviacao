@@ -12,3 +12,6 @@
 [2026-05-14T11:10:14.581Z] Starting dev server with command: pnpm run dev
 [2026-05-14T11:10:14.924Z] ERR_PNPM_NO_IMPORTER_MANIFEST_FOUND  No package.json (or package.yaml, or package.json5) was found in "/home/ubuntu/gestao_aviacao".
 [2026-05-14T11:10:14.943Z] Dev server exited with code 1
+[2026-05-14T12:43:52.272Z] Starting dev server with command: pnpm run dev
+[2026-05-14T12:43:52.643Z] ERR_PNPM_NO_IMPORTER_MANIFEST_FOUND  No package.json (or package.yaml, or package.json5) was found in "/home/ubuntu/gestao_aviacao".
+[2026-05-14T12:43:52.661Z] Dev server exited with code 1
