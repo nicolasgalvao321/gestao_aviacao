@@ -159,16 +159,39 @@ void handle_client(SOCKET client) {
             char *body = strstr(buffer, "\r\n\r\n");
             if (body) {
                 body += 4;
-                // Simple parsing (in production, use proper JSON parser)
-                char code[50], origin[50], dest[50], date[20], time[20];
-                double price;
-                sscanf(body, "code=%49[^&]&origin=%49[^&]&destination=%49[^&]&date=%19[^&]&time=%19[^&]&price=%lf",
-                       code, origin, dest, date, time, &price);
+                // Parse JSON: {"code":"...","origin":"...","destination":"...","date":"...","time":"...","price":...}
+                char code[50] = {0}, origin[50] = {0}, dest[50] = {0}, date[20] = {0}, time[20] = {0};
+                double price = 0;
                 
-                if (db_add_flight(db, code, origin, dest, date, time, price)) {
-                    send_response(client, "application/json", "{\"success\":true}");
+                // Simple JSON parsing
+                char *p;
+                if ((p = strstr(body, "\"code\":\"")) != NULL) {
+                    sscanf(p + 9, "%49[^\"]", code);
+                }
+                if ((p = strstr(body, "\"origin\":\"")) != NULL) {
+                    sscanf(p + 10, "%49[^\"]", origin);
+                }
+                if ((p = strstr(body, "\"destination\":\"")) != NULL) {
+                    sscanf(p + 16, "%49[^\"]", dest);
+                }
+                if ((p = strstr(body, "\"date\":\"")) != NULL) {
+                    sscanf(p + 8, "%19[^\"]", date);
+                }
+                if ((p = strstr(body, "\"time\":\"")) != NULL) {
+                    sscanf(p + 8, "%19[^\"]", time);
+                }
+                if ((p = strstr(body, "\"price\":")) != NULL) {
+                    sscanf(p + 9, "%lf", &price);
+                }
+                
+                if (code[0] && origin[0] && dest[0] && date[0] && time[0] && price > 0) {
+                    if (db_add_flight(db, code, origin, dest, date, time, price)) {
+                        send_response(client, "application/json", "{\"success\":true}");
+                    } else {
+                        send_response(client, "application/json", "{\"success\":false}");
+                    }
                 } else {
-                    send_response(client, "application/json", "{\"success\":false}");
+                    send_response(client, "application/json", "{\"success\":false,\"error\":\"Invalid data\"}");
                 }
             }
         }
@@ -176,15 +199,32 @@ void handle_client(SOCKET client) {
             char *body = strstr(buffer, "\r\n\r\n");
             if (body) {
                 body += 4;
-                int flight_id;
-                char seat[10], name[100], doc[20];
-                sscanf(body, "flight_id=%d&seat=%9[^&]&name=%99[^&]&document=%19s",
-                       &flight_id, seat, name, doc);
+                int flight_id = 0;
+                char seat[10] = {0}, name[100] = {0}, doc[20] = {0};
                 
-                if (db_add_reservation(db, flight_id, seat, name, doc)) {
-                    send_response(client, "application/json", "{\"success\":true}");
+                // Simple JSON parsing
+                char *p;
+                if ((p = strstr(body, "\"flight_id\":")) != NULL) {
+                    sscanf(p + 13, "%d", &flight_id);
+                }
+                if ((p = strstr(body, "\"seat_code\":\"")) != NULL) {
+                    sscanf(p + 14, "%9[^\"]", seat);
+                }
+                if ((p = strstr(body, "\"passenger_name\":\"")) != NULL) {
+                    sscanf(p + 19, "%99[^\"]", name);
+                }
+                if ((p = strstr(body, "\"passenger_document\":\"")) != NULL) {
+                    sscanf(p + 24, "%19[^\"]", doc);
+                }
+                
+                if (flight_id > 0 && seat[0] && name[0] && doc[0]) {
+                    if (db_add_reservation(db, flight_id, seat, name, doc)) {
+                        send_response(client, "application/json", "{\"success\":true}");
+                    } else {
+                        send_response(client, "application/json", "{\"success\":false}");
+                    }
                 } else {
-                    send_response(client, "application/json", "{\"success\":false}");
+                    send_response(client, "application/json", "{\"success\":false,\"error\":\"Invalid data\"}");
                 }
             }
         }
