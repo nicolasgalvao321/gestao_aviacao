@@ -1,11 +1,6 @@
 // Detecta a porta automaticamente (8080 em produção, ou a porta do servidor em desenvolvimento)
-// Detecta a porta automaticamente
-// Em desenvolvimento no CLion, usa a porta dinâmica
-// Em produção, usa a porta 8080
-const API_URL = (() => {
-    const port = window.location.port || 8080;
-    return `http://${window.location.hostname}:${port}/api`;
-})();
+// API sempre na porta 8080 (servidor C)
+const API_URL = 'http://localhost:8080/api';
 
 class AeroApp {
     constructor() {

@@ -137,19 +137,27 @@ void handle_client(SOCKET client) {
             }
         }
         else if (strstr(path, ".css")) {
-            FILE *file = fopen(path + 1, "r");
+            char filepath[512];
+            snprintf(filepath, sizeof(filepath), "frontend%s", path);
+            FILE *file = fopen(filepath, "r");
             if (file) {
                 fread(response_body, 1, sizeof(response_body) - 1, file);
                 fclose(file);
                 send_response(client, "text/css", response_body);
+            } else {
+                send_response(client, "text/plain", "404 Not Found");
             }
         }
         else if (strstr(path, ".js")) {
-            FILE *file = fopen(path + 1, "r");
+            char filepath[512];
+            snprintf(filepath, sizeof(filepath), "frontend%s", path);
+            FILE *file = fopen(filepath, "r");
             if (file) {
                 fread(response_body, 1, sizeof(response_body) - 1, file);
                 fclose(file);
                 send_response(client, "application/javascript", response_body);
+            } else {
+                send_response(client, "text/plain", "404 Not Found");
             }
         }
     }
