@@ -1,192 +1,207 @@
-# AeroGestão - Sistema de Gestão de Aviação
+# AeroGestão - Sistema de Gerenciamento de Aviação
 
-Aplicação web para gestão de voos e reserva de assentos com backend em C++ e frontend em HTML/CSS/JavaScript.
+Sistema simples de gerenciamento de voos e reservas de assentos desenvolvido em **C puro** com frontend HTML/CSS/JavaScript.
 
-## Arquitetura
+## 📋 Requisitos
 
-- **Frontend**: HTML/CSS/JavaScript (roda no navegador)
-- **Backend**: C++ com Crow (servidor HTTP)
-- **Banco de dados**: SQLite3
-- **API**: RESTful em JSON
+### Windows (Recomendado: VS Code)
+- **Visual Studio Code** (https://code.visualstudio.com/)
+- **C/C++ Extension Pack** (Microsoft) - instale via VS Code
+- **MinGW-w64** (compilador GCC para Windows) - instalado automaticamente
+- **CMake** - instalado automaticamente
 
-## Estrutura do Projeto
+### macOS
+- **Xcode Command Line Tools**: `xcode-select --install`
+- **CMake**: `brew install cmake`
+
+### Linux
+- **build-essential**: `sudo apt-get install build-essential cmake`
+
+## 🚀 Como Compilar e Executar
+
+### Opção 1: VS Code (Windows) ⭐ Recomendado
+
+#### Primeira Vez: Configuração Inicial
+
+1. **Abra o projeto no VS Code**
+   - File → Open Folder → selecione a pasta `gestao_aviacao`
+
+2. **Instale a extensão C/C++**
+   - Ctrl + Shift + X (abrir extensões)
+   - Procure por: `C/C++ Extension Pack` (Microsoft)
+   - Clique em "Install"
+   - Aguarde a instalação
+
+3. **Recarregue o VS Code**
+   - Ctrl + Shift + P
+   - Digite: `Developer: Reload Window`
+   - Pressione Enter
+
+4. **Configure o CMake**
+   - Ctrl + Shift + P
+   - Digite: `CMake: Configure`
+   - Escolha o compilador: **GCC** ou **MinGW**
+   - Aguarde a configuração (pode demorar alguns minutos)
+
+#### Compilar e Executar
+
+1. **Compile o projeto**
+   - Ctrl + Shift + P
+   - Digite: `CMake: Build`
+   - Ou pressione: **Ctrl + Shift + B**
+
+2. **Execute o servidor**
+   - Ctrl + Shift + P
+   - Digite: `CMake: Run`
+   - Ou clique no botão ▶ (Play) no canto superior direito
+
+3. **Abra no navegador**
+   - Acesse: **http://localhost:8080**
+   - Pronto! 🎉
+
+### Opção 2: Terminal (Qualquer SO)
+
+```bash
+# Navegue até a pasta do projeto
+cd gestao_aviacao
+
+# Crie a pasta de build
+mkdir -p build
+cd build
+
+# Configure o CMake
+cmake ..
+
+# Compile
+make
+
+# Execute
+./aerogestao-server
+```
+
+Depois acesse: **http://localhost:8080**
+
+## 🎯 Funcionalidades
+
+- ✅ **Listagem de Voos**: Visualize todos os voos disponíveis
+- ✅ **Adicionar Voos**: Admin pode cadastrar novos voos
+- ✅ **Reservar Assentos**: Clientes podem reservar assentos
+- ✅ **Visualizar Reservas**: Veja todas as reservas realizadas
+- ✅ **API REST**: Endpoints para integração
+
+## 📡 API Endpoints
+
+### GET
+- `GET /` - Retorna o frontend (HTML)
+- `GET /styles.css` - Retorna o CSS
+- `GET /app.js` - Retorna o JavaScript
+- `GET /api/flights` - Lista todos os voos (JSON)
+- `GET /api/reservations` - Lista todas as reservas (JSON)
+
+### POST
+- `POST /api/flights` - Adiciona um novo voo
+  ```json
+  {
+    "code": "BR001",
+    "origin": "São Paulo",
+    "destination": "Rio de Janeiro",
+    "date": "2026-05-20",
+    "time": "10:00",
+    "price": 250.00
+  }
+  ```
+
+- `POST /api/reservations` - Faz uma reserva
+  ```json
+  {
+    "flight_id": 1,
+    "seat_code": "1A",
+    "passenger_name": "João Silva",
+    "passenger_document": "12345678900"
+  }
+  ```
+
+## 🔐 Admin
+
+- **Senha**: `admin123`
+- Acesse a seção Admin para adicionar voos
+
+## 📁 Estrutura do Projeto
 
 ```
 gestao_aviacao/
-├── frontend/
-│   ├── index.html       # Interface web
-│   ├── styles.css       # Estilos
-│   └── app.js          # Lógica JavaScript
 ├── backend/
-│   ├── src/
-│   │   ├── main.cpp    # Servidor HTTP
-│   │   ├── database.h  # Header do banco
-│   │   └── database.cpp # Implementação do banco
-│   └── include/        # Bibliotecas externas (Crow, nlohmann/json)
-├── CMakeLists.txt      # Configuração CMake
-└── README.md           # Este arquivo
+│   └── src/
+│       ├── main.c          # Servidor HTTP em C
+│       ├── database.c      # Lógica de dados em memória
+│       ├── database.h      # Headers
+│       └── ...
+├── frontend/
+│   ├── index.html          # Interface web
+│   ├── styles.css          # Estilos
+│   ├── app.js              # Lógica do frontend
+│   └── ...
+├── build/                  # Pasta de compilação (gerada automaticamente)
+├── CMakeLists.txt          # Configuração do CMake
+└── README.md               # Este arquivo
 ```
 
-## Requisitos
+## 🛠️ Troubleshooting
 
-- **CMake** 3.16+
-- **C++17** ou superior
-- **SQLite3**
-- **Crow** (header-only, já incluído)
-- **nlohmann/json** (header-only, já incluído)
+### Erro: "cmake.configure not found" (VS Code)
+**Solução:**
+1. Ctrl + Shift + X (abrir extensões)
+2. Procure por: `CMake Tools`
+3. Instale a extensão (Microsoft)
+4. Reinicie o VS Code (Ctrl + Shift + P → "Developer: Reload Window")
 
-### Windows (MinGW com CLion)
+### Erro: "GCC not found" (VS Code)
+**Solução:**
+1. Instale o **MinGW-w64** de: https://www.mingw-w64.org/
+2. Ou deixe o VS Code instalar automaticamente quando configurar o CMake
+3. Reinicie o VS Code
 
-CLion já vem com MinGW, CMake e Ninja. Apenas certifique-se de ter SQLite3 instalado.
+### Porta 8080 já está em uso
+**Solução:**
+1. Abra `backend/src/main.c`
+2. Procure pela linha: `bind(server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr));`
+3. Mude a porta (8080) para outra (ex: 8081)
+4. Recompile
 
-### Linux
+### Frontend não carrega
+**Solução:**
+- Certifique-se de que está acessando `http://localhost:8080` (não `file://`)
+- Verifique se o servidor está rodando (deve aparecer "Servidor iniciado em..." no terminal)
 
-```bash
-sudo apt-get install cmake g++ sqlite3 libsqlite3-dev
-```
+## 📝 Notas Importantes
 
-### macOS
+- O servidor roda na **porta 8080**
+- Os dados são armazenados em **memória** (não persistem após reiniciar)
+- Sem dependências externas além de C puro
+- Compatível com Windows, macOS e Linux
+- Tudo em um único executável! 🚀
 
-```bash
-brew install cmake sqlite3
-```
+## 👨‍💼 Para Apresentar ao Professor
 
-## Compilação
+1. **Compile** o projeto (Ctrl + Shift + B no VS Code)
+2. **Execute** o servidor (Ctrl + Shift + P → "CMake: Run")
+3. **Abra** `http://localhost:8080` no navegador
+4. **Demonstre:**
+   - Listagem de voos
+   - Adição de novo voo (Admin → Senha: admin123)
+   - Reserva de assento
+   - Visualização de reservas
 
-### No CLion
+Tudo funciona em um único executável! 🎉
 
-1. Abra o projeto em CLion
-2. Clique em **Build → Build Project** (Ctrl+F9)
-3. A aplicação será compilada em `cmake-build-debug/`
+## 📚 Tecnologias Utilizadas
 
-### Via Terminal
+- **Backend**: C puro (sem frameworks)
+- **Frontend**: HTML5, CSS3, JavaScript vanilla
+- **Servidor HTTP**: Socket programming (BSD sockets)
+- **Dados**: Memória (arrays em C)
+- **Build**: CMake
 
-```bash
-mkdir build
-cd build
-cmake ..
-cmake --build .
-```
+---
 
-## Execução
-
-### Backend (Servidor C++)
-
-```bash
-# No CLion: Shift+F10 ou Run → Run
-# Via terminal:
-./cmake-build-debug/aerogestao-server
-```
-
-O servidor iniciará em `http://localhost:8080`
-
-### Frontend
-
-Abra o arquivo `frontend/index.html` no navegador ou sirva com um servidor local:
-
-```bash
-# Com Python 3
-python -m http.server 8000 --directory frontend
-
-# Com Node.js
-npx http-server frontend
-```
-
-Acesse `http://localhost:8000`
-
-## API Endpoints
-
-### Voos
-
-- `GET /api/flights` - Listar todos os voos
-- `GET /api/flights/<id>` - Obter voo específico
-- `POST /api/flights` - Criar novo voo
-
-**Exemplo POST:**
-```json
-{
-  "code": "AV-1003",
-  "origin": "São Paulo",
-  "destination": "Salvador",
-  "date": "2026-05-20",
-  "time": "14:00",
-  "price": 450.00
-}
-```
-
-### Reservas
-
-- `GET /api/reservations` - Listar todas as reservas
-- `GET /api/reservations/flight/<id>` - Reservas de um voo específico
-- `POST /api/reservations` - Criar nova reserva
-- `DELETE /api/reservations/<id>` - Cancelar reserva
-
-**Exemplo POST:**
-```json
-{
-  "flight_id": 1,
-  "seat_code": "1A",
-  "passenger_name": "João Silva",
-  "passenger_document": "12345678900"
-}
-```
-
-## Funcionalidades
-
-### Página do Cliente
-- ✅ Listar voos disponíveis
-- ✅ Visualizar mapa de assentos
-- ✅ Selecionar assento
-- ✅ Preencher dados do passageiro
-- ✅ Confirmar reserva
-
-### Página do Admin (Senha: admin123)
-- ✅ Cadastrar novo voo
-- ✅ Visualizar lista de voos
-- ✅ Ver reservas por voo
-- ✅ Cancelar reservas
-
-## Banco de Dados
-
-O banco SQLite é criado automaticamente na primeira execução com as seguintes tabelas:
-
-- **aircraft**: Modelos de aeronaves
-- **flights**: Voos cadastrados
-- **seats**: Assentos dos voos
-- **reservations**: Reservas de passageiros
-
-## Troubleshooting
-
-### Erro: "SQLite3 não encontrado"
-Instale SQLite3 dev:
-```bash
-# Linux
-sudo apt-get install libsqlite3-dev
-
-# macOS
-brew install sqlite3
-```
-
-### Porta 8080 já em uso
-Modifique em `backend/src/main.cpp` a linha:
-```cpp
-app.port(8080).multithreaded().run();
-```
-
-### Frontend não conecta ao backend
-Certifique-se de que:
-1. O backend está rodando em `http://localhost:8080`
-2. O frontend está em `http://localhost:8000` (ou outro servidor local)
-3. O CORS está habilitado (já está no código)
-
-## Desenvolvimento
-
-Para adicionar novas funcionalidades:
-
-1. Adicione métodos em `backend/src/database.h` e `database.cpp`
-2. Crie novas rotas em `backend/src/main.cpp`
-3. Atualize o frontend em `frontend/app.js`
-
-## Licença
-
-MIT
+**Desenvolvido para projeto escolar de Gestão de Aviação**
