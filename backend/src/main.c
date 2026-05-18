@@ -220,8 +220,17 @@ int main() {
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     server_addr.sin_port = htons(8080);
 
+    // Allow reusing the address
+    int reuse = 1;
+    if (setsockopt(server, SOL_SOCKET, SO_REUSEADDR, (const char*)&reuse, sizeof(reuse)) < 0) {
+        fprintf(stderr, "Erro ao configurar socket\n");
+        closesocket(server);
+        return 1;
+    }
+
     if (bind(server, (struct sockaddr *)&server_addr, sizeof(server_addr)) == SOCKET_ERROR) {
-        fprintf(stderr, "Erro ao fazer bind\n");
+        fprintf(stderr, "Erro ao fazer bind na porta 8080\n");
+        perror("bind");
         closesocket(server);
         return 1;
     }

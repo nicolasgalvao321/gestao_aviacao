@@ -1,0 +1,4 @@
+/home/ubuntu/gestao_aviacao/build/CMakeFiles/aerogestao-server.dir
+/home/ubuntu/gestao_aviacao/build/CMakeFiles/copy_frontend.dir
+/home/ubuntu/gestao_aviacao/build/CMakeFiles/edit_cache.dir
+/home/ubuntu/gestao_aviacao/build/CMakeFiles/rebuild_cache.dir

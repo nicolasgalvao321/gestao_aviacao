@@ -4,18 +4,20 @@ project(AeroGestao C)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-# SQLite3
-find_package(SQLite3 REQUIRED)
-
 # Backend executable
 add_executable(aerogestao-server
     backend/src/main.c
     backend/src/database.c
 )
 
-target_link_libraries(aerogestao-server
-    SQLite::SQLite3
-)
+# Include directories
+target_include_directories(aerogestao-server PRIVATE ${CMAKE_SOURCE_DIR}/backend/src)
+
+# Find SQLite3
+find_package(SQLite3 REQUIRED)
+
+# Link libraries
+target_link_libraries(aerogestao-server PRIVATE SQLite::SQLite3)
 
 # Windows specific
 if(WIN32)
