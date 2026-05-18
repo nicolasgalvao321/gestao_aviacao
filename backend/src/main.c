@@ -1,4 +1,5 @@
 #include "database.h"
+#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -202,11 +203,12 @@ int main() {
 #endif
 
     // Initialize database
-    db = db_create("aviacao.db");
-    if (!db_init(db)) {
-        fprintf(stderr, "Erro ao inicializar banco de dados\n");
+    db = db_create();
+    if (!db) {
+        fprintf(stderr, "Erro ao criar banco de dados\n");
         return 1;
     }
+    db_init(db);
 
     // Create server socket
     SOCKET server = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);

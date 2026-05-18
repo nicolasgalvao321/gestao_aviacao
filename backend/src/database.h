@@ -1,7 +1,8 @@
 #ifndef DATABASE_H
 #define DATABASE_H
 
-#include <sqlite3.h>
+#define MAX_FLIGHTS 100
+#define MAX_RESERVATIONS 1000
 
 typedef struct {
     int id;
@@ -22,13 +23,17 @@ typedef struct {
 } Reservation;
 
 typedef struct {
-    sqlite3 *db;
-    char db_path[256];
+    Flight flights[MAX_FLIGHTS];
+    int flights_count;
+    Reservation reservations[MAX_RESERVATIONS];
+    int reservations_count;
+    int next_flight_id;
+    int next_reservation_id;
 } Database;
 
 // Database functions
-Database* db_create(const char *db_path);
-int db_init(Database *db);
+Database* db_create();
+void db_init(Database *db);
 void db_close(Database *db);
 
 // Flight functions
@@ -42,9 +47,5 @@ Reservation* db_get_reservations(Database *db, int *count);
 int db_add_reservation(Database *db, int flight_id, const char *seat_code,
                        const char *passenger_name, const char *passenger_document);
 int db_cancel_reservation(Database *db, int reservation_id);
-
-// Utility functions
-void db_free_flights(Flight *flights);
-void db_free_reservations(Reservation *reservations);
 
 #endif // DATABASE_H

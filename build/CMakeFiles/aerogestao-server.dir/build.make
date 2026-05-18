@@ -108,7 +108,6 @@ aerogestao__server_EXTERNAL_OBJECTS =
 aerogestao-server: CMakeFiles/aerogestao-server.dir/backend/src/main.c.o
 aerogestao-server: CMakeFiles/aerogestao-server.dir/backend/src/database.c.o
 aerogestao-server: CMakeFiles/aerogestao-server.dir/build.make
-aerogestao-server: /usr/lib/x86_64-linux-gnu/libsqlite3.so
 aerogestao-server: CMakeFiles/aerogestao-server.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/ubuntu/gestao_aviacao/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking C executable aerogestao-server"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/aerogestao-server.dir/link.txt --verbose=$(VERBOSE)

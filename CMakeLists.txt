@@ -13,12 +13,6 @@ add_executable(aerogestao-server
 # Include directories
 target_include_directories(aerogestao-server PRIVATE ${CMAKE_SOURCE_DIR}/backend/src)
 
-# Find SQLite3
-find_package(SQLite3 REQUIRED)
-
-# Link libraries
-target_link_libraries(aerogestao-server PRIVATE SQLite::SQLite3)
-
 # Windows specific
 if(WIN32)
     target_link_libraries(aerogestao-server ws2_32)
