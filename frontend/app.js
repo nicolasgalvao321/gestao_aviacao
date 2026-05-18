@@ -369,24 +369,39 @@ class AeroApp {
         }
 
         const flight = { code, origin, destination, date, time, price };
+        console.log('Enviando:', JSON.stringify(flight));
+        console.log('URL:', `${API_URL}/flights`);
 
         fetch(`${API_URL}/flights`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(flight)
         })
-        .then(res => res.json())
-        .then(data => {
-            alert('Voo adicionado com sucesso!');
-            document.getElementById('flight-code').value = '';
-            document.getElementById('flight-origin').value = '';
-            document.getElementById('flight-destination').value = '';
-            document.getElementById('flight-date').value = '';
-            document.getElementById('flight-time').value = '';
-            document.getElementById('flight-price').value = '';
-            this.loadFlights();
+        .then(res => {
+            console.log('Status:', res.status);
+            return res.text();
         })
-        .catch(err => alert('Erro ao adicionar voo: ' + err));
+        .then(text => {
+            console.log('Resposta:', text);
+            try {
+                const data = JSON.parse(text);
+                alert('Voo adicionado com sucesso!');
+                document.getElementById('flight-code').value = '';
+                document.getElementById('flight-origin').value = '';
+                document.getElementById('flight-destination').value = '';
+                document.getElementById('flight-date').value = '';
+                document.getElementById('flight-time').value = '';
+                document.getElementById('flight-price').value = '';
+                this.loadFlights();
+            } catch (e) {
+                console.error('Erro JSON:', e);
+                alert('Erro ao adicionar voo: ' + text);
+            }
+        })
+        .catch(err => {
+            console.error('Erro:', err);
+            alert('Erro ao adicionar voo: ' + err);
+        });
     }
 
     loginAdmin() {
