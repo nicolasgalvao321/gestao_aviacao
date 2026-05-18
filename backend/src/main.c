@@ -160,28 +160,51 @@ void handle_client(SOCKET client) {
             if (body) {
                 body += 4;
                 // Parse JSON: {"code":"...","origin":"...","destination":"...","date":"...","time":"...","price":...}
-                char code[50] = {0}, origin[50] = {0}, dest[50] = {0}, date[20] = {0}, time[20] = {0};
+                char code[50] = {0}, origin[100] = {0}, dest[100] = {0}, date[20] = {0}, time[20] = {0};
                 double price = 0;
                 
-                // Simple JSON parsing
+                // Simple JSON parsing - skip whitespace and find values
                 char *p;
-                if ((p = strstr(body, "\"code\":\"")) != NULL) {
-                    sscanf(p + 9, "%49[^\"]", code);
+                if ((p = strstr(body, "code")) != NULL) {
+                    p = strchr(p, '"');
+                    if (p) {
+                        p++;
+                        sscanf(p, "%49[^\"]", code);
+                    }
                 }
-                if ((p = strstr(body, "\"origin\":\"")) != NULL) {
-                    sscanf(p + 10, "%49[^\"]", origin);
+                if ((p = strstr(body, "origin")) != NULL) {
+                    p = strchr(p, '"');
+                    if (p) {
+                        p++;
+                        sscanf(p, "%99[^\"]", origin);
+                    }
                 }
-                if ((p = strstr(body, "\"destination\":\"")) != NULL) {
-                    sscanf(p + 16, "%49[^\"]", dest);
+                if ((p = strstr(body, "destination")) != NULL) {
+                    p = strchr(p, '"');
+                    if (p) {
+                        p++;
+                        sscanf(p, "%99[^\"]", dest);
+                    }
                 }
-                if ((p = strstr(body, "\"date\":\"")) != NULL) {
-                    sscanf(p + 8, "%19[^\"]", date);
+                if ((p = strstr(body, "date")) != NULL) {
+                    p = strchr(p, '"');
+                    if (p) {
+                        p++;
+                        sscanf(p, "%19[^\"]", date);
+                    }
                 }
-                if ((p = strstr(body, "\"time\":\"")) != NULL) {
-                    sscanf(p + 8, "%19[^\"]", time);
+                if ((p = strstr(body, "time")) != NULL) {
+                    p = strchr(p, '"');
+                    if (p) {
+                        p++;
+                        sscanf(p, "%19[^\"]", time);
+                    }
                 }
-                if ((p = strstr(body, "\"price\":")) != NULL) {
-                    sscanf(p + 9, "%lf", &price);
+                if ((p = strstr(body, "price")) != NULL) {
+                    p = strchr(p, ':');
+                    if (p) {
+                        sscanf(p + 1, "%lf", &price);
+                    }
                 }
                 
                 if (code[0] && origin[0] && dest[0] && date[0] && time[0] && price > 0) {
@@ -202,19 +225,34 @@ void handle_client(SOCKET client) {
                 int flight_id = 0;
                 char seat[10] = {0}, name[100] = {0}, doc[20] = {0};
                 
-                // Simple JSON parsing
+                // Simple JSON parsing - skip whitespace and find values
                 char *p;
-                if ((p = strstr(body, "\"flight_id\":")) != NULL) {
-                    sscanf(p + 13, "%d", &flight_id);
+                if ((p = strstr(body, "flight_id")) != NULL) {
+                    p = strchr(p, ':');
+                    if (p) {
+                        sscanf(p + 1, "%d", &flight_id);
+                    }
                 }
-                if ((p = strstr(body, "\"seat_code\":\"")) != NULL) {
-                    sscanf(p + 14, "%9[^\"]", seat);
+                if ((p = strstr(body, "seat_code")) != NULL) {
+                    p = strchr(p, '"');
+                    if (p) {
+                        p++;
+                        sscanf(p, "%9[^\"]", seat);
+                    }
                 }
-                if ((p = strstr(body, "\"passenger_name\":\"")) != NULL) {
-                    sscanf(p + 19, "%99[^\"]", name);
+                if ((p = strstr(body, "passenger_name")) != NULL) {
+                    p = strchr(p, '"');
+                    if (p) {
+                        p++;
+                        sscanf(p, "%99[^\"]", name);
+                    }
                 }
-                if ((p = strstr(body, "\"passenger_document\":\"")) != NULL) {
-                    sscanf(p + 24, "%19[^\"]", doc);
+                if ((p = strstr(body, "passenger_document")) != NULL) {
+                    p = strchr(p, '"');
+                    if (p) {
+                        p++;
+                        sscanf(p, "%19[^\"]", doc);
+                    }
                 }
                 
                 if (flight_id > 0 && seat[0] && name[0] && doc[0]) {
